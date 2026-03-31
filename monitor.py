@@ -6,7 +6,7 @@ import os
 # This looks for keywords ONLY on stocktitan.net
 RSS_URL = 'https://news.google.com/rss/search?q=allintext:("phase 3" OR "partnership" OR "FDA") site:stocktitan.net'
 # Replace the end of this URL with your unique topic name from the ntfy app
-NTFY_URL = "https://ntfy.sh/stock_titan_alerts_777" 
+NTFY_URL = "https://ntfy.sh/stock_titan_alerts_jlc_888" 
 DB_FILE = "seen_articles.txt"
 
 def send_alert(title, link):
