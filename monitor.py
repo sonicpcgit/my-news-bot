@@ -1,12 +1,14 @@
 import feedparser
 import requests
 import os
-
+import urllib.parse
+keywords = 'allintext:("phase 3" OR "partnership" OR "FDA") site:stocktitan.net'
+RSS_URL = f"https://news.google.com/rss/search?q={urllib.parse.quote(keywords)}"
 # --- CONFIGURATION ---
 # This looks for keywords ONLY on stocktitan.net
 # --- UPDATED CONFIGURATION ---
 # This version is "URL Encoded" so Python doesn't crash on the spaces or quotes
-RSS_URL = 'https://news.google.com/rss/search?q=allintext%3A%28%22phase%203%22%20OR%20%22partnership%22%20OR%20%22FDA%22%29%20site%3Astocktitan.net'
+# RSS_URL = 'https://news.google.com/rss/search?q=allintext%3A%28%22phase%203%22%20OR%20%22partnership%22%20OR%20%22FDA%22%29%20site%3Astocktitan.net'
 # RSS_URL = 'https://news.google.com/rss/search?q=allintext:("phase 3" OR "partnership" OR "FDA") site:stocktitan.net'
 # Replace the end of this URL with your unique topic name from the ntfy app
 NTFY_URL = "https://ntfy.sh/stock_titan_alerts_jlc_888" 
