@@ -2,32 +2,29 @@ name: Stock Titan Monitor
 
 on:
   schedule:
-    # There must be exactly 4 spaces before the hyphen (-)
-    - cron: '*/15 * * * *'
-  workflow_dispatch: # This allows the manual "Run workflow" button
+    # Instead of */15, we tell it exactly which minutes of the hour to run
+    - cron: '0,15,30,45 * * * *'
+  workflow_dispatch:
 
 jobs:
-  build:
+  check-news:
     runs-on: ubuntu-latest
+    # Added this to prevent multiple runs from overlapping
+    concurrency:
+      group: news-monitor
+      cancel-in-progress: true
+      
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Set up Python
-        uses: actions/setup-python@v4
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v4
         with:
           python-version: '3.9'
-
-      - name: Install dependencies
-        run: pip install feedparser requests
-
-      - name: Run Monitor
-        run: python monitor.py
-
+      - run: pip install feedparser requests
+      - run: python monitor.py
       - name: Save Memory
         run: |
           git config --global user.name 'NewsBot'
           git config --global user.email 'bot@noreply.github.com'
           git add seen_articles.txt
-          git commit -m "Update seen list [skip ci]" || echo "No new items"
+          git commit -m "Update seen list [skip ci]" || echo "No changes"
           git push
