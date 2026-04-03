@@ -1,68 +1,74 @@
 import feedparser
 import requests
-import os
 import urllib.parse
-keywords = 'intitle:("phase 3" OR "FDA") site:stocktitan.net when:24h'
-RSS_URL = f"https://news.google.com/rss/search?q={urllib.parse.quote(keywords)}"
-# --- CONFIGURATION ---
-# This looks for keywords ONLY on stocktitan.net
-# --- UPDATED CONFIGURATION ---
-# This version is "URL Encoded" so Python doesn't crash on the spaces or quotes
-# RSS_URL = 'https://news.google.com/rss/search?q=allintext%3A%28%22phase%203%22%20OR%20%22partnership%22%20OR%20%22FDA%22%29%20site%3Astocktitan.net'
-# RSS_URL = 'https://news.google.com/rss/search?q=allintext:("phase 3" OR "partnership" OR "FDA") site:stocktitan.net'
-# Replace the end of this URL with your unique topic name from the ntfy app
+import os
+
+# --- 1. CONFIGURATION (Edit Keywords Here) ---
+# Type your keywords naturally. No need for %20 or %22 here!
+KEYWORDS = 'intitle:("phase 3" OR "FDA") site:stocktitan.net when:24h'
+
+# Words to ignore (prevents Pizza/Crypto/Gaming false positives)
+BLOCKLIST = ["pizza", "restaurant", "burger", "gaming", "crypto", "bitcoin", "litigation"]
+
+# Your ntfy.sh topic URL
 NTFY_URL = "https://ntfy.sh/stock_titan_alerts_jlc_888" 
+
+# --- 2. URL CONSTRUCTION ---
+# This encodes the KEYWORDS string into a safe URL format
+encoded_query = urllib.parse.quote(KEYWORDS)
+RSS_URL = f"https://news.google.com/rss/search?q={encoded_query}"
+
+# --- 3. LOAD PREVIOUSLY SEEN ARTICLES ---
 DB_FILE = "seen_articles.txt"
+if not os.path.exists(DB_FILE):
+    open(DB_FILE, 'w').close()
 
-def send_alert(title, link):
-    """Sends a high-priority push notification"""
-    try:
-        requests.post(NTFY_URL, 
-                      data=link.encode('utf-8'),
-                      headers={
-                          "Title": title.encode('utf-8'),
-                          "Click": link,
-                          "Priority": "high",
-                          "Tags": "chart_with_upwards_trend,pill"
-                      })
-        print(f"Alert Sent: {title}")
-    except Exception as e:
-        print(f"Error: {e}")
+with open(DB_FILE, 'r') as f:
+    seen_ids = set(line.strip() for line in f)
 
-def run_monitor():
-    # Create database file if it doesn't exist
-    if not os.path.exists(DB_FILE):
-        open(DB_FILE, "w").close()
-    
-    with open(DB_FILE, "r") as f:
-        seen_ids = set(f.read().splitlines())
+# --- 4. FETCH AND FILTER THE FEED ---
+feed = feedparser.parse(RSS_URL)
+new_ids = []
 
-    # Fetch and parse the Google News RSS feed
-    feed = feedparser.parse(RSS_URL)
-    new_ids = []
-
-    # --- ADD THIS BLOCKLIST ---
-# These are words that should NEVER be in your biotech alerts
-BLOCKLIST = ["pizza", "restaurant", "burger", "gaming", "crypto", "bitcoin"]
+print(f"Checking feed: {RSS_URL}")
 
 for entry in feed.entries:
+    # Get the title in lowercase for easier checking
     title_lower = entry.title.lower()
     
-    # Only proceed if the title DOES NOT contain any blocklisted words
+    # Check the BLOCKLIST
     if any(word in title_lower for word in BLOCKLIST):
-        continue  # Skip this article entirely
-        
+        print(f"Skipping (Blocklisted): {entry.title}")
+        continue
+    
+    # Check if we have seen this ID before
     if entry.id not in seen_ids:
-            send_alert(entry.title, entry.link)
+        print(f"New Article Found: {entry.title}")
+        
+        # Send to ntfy.sh
+        try:
+            requests.post(NTFY_URL,
+                data=entry.title.encode('utf-8'),
+                headers={
+                    "Title": "Biotech Catalyst Alert",
+                    "Click": entry.link,
+                    "Priority": "high"
+                }
+            )
             new_ids.append(entry.id)
-            # Limit to 5 alerts per run to prevent spam
-            if len(new_ids) >= 5: break 
+        except Exception as e:
+            print(f"Error sending notification: {e}")
 
-    # Save the new IDs so we don't alert twice
-    with open(DB_FILE, "a") as f:
-        for eid in new_ids:
-            f.write(eid + "\n")
+    # Safety limit: don't send more than 10 alerts in one run
+    if len(new_ids) >= 10:
+        break
 
-if __name__ == "__main__":
-    run_monitor()
+# --- 5. SAVE NEW SEEN ARTICLES ---
+if new_ids:
+    with open(DB_FILE, 'a') as f:
+        for article_id in new_ids:
+            f.write(article_id + "\n")
+    print(f"Saved {len(new_ids)} new articles to memory.")
+else:
+    print("No new matches found.")
     
