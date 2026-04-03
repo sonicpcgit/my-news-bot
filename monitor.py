@@ -5,10 +5,10 @@ import os
 
 # --- 1. CONFIGURATION (Edit Keywords & Filters Here) ---
 # The keywords Google uses to find articles initially
-SEARCH_QUERY = 'intitle:("phase 3" OR "FDA") site:stocktitan.net/news when:24h'
+SEARCH_QUERY = 'intitle:("phase 3" OR "phase iii" OR "FDA") site:stocktitan.net/news when:24h'
 
 # The "Double-Check" list: The title MUST contain one of these to pass
-MUST_CONTAIN = ["phase 3", "fda"]
+MUST_CONTAIN = ["phase 3", "phase iii", "fda"]
 
 # The "Bouncer" list: If these are in the title, skip it immediately
 BLOCKLIST = ["pizza", "restaurant", "burger", "gaming", "crypto", "bitcoin", "litigation", "pineapple"]
