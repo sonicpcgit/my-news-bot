@@ -5,7 +5,7 @@ import os
 
 # --- 1. CONFIGURATION (Edit Keywords Here) ---
 # Type your keywords naturally. No need for %20 or %22 here!
-KEYWORDS = 'intitle:("phase 3" OR "FDA") site:stocktitan.net when:24h'
+KEYWORDS = 'intitle:("phase 3" OR "FDA") site:stocktitan.net/news when:24h'
 
 # Words to ignore (prevents Pizza/Crypto/Gaming false positives)
 BLOCKLIST = ["pizza", "restaurant", "burger", "gaming", "crypto", "bitcoin", "litigation"]
