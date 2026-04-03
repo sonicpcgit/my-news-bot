@@ -50,7 +50,7 @@ for entry in feed.entries:
             requests.post(NTFY_URL,
                 data=entry.title.encode('utf-8'),
                 headers={
-                    "Title": "Biotech Catalyst Alert",
+                    "Title": entry.title,
                     "Click": entry.link,
                     "Priority": "high"
                 }
