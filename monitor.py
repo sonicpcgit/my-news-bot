@@ -2,7 +2,7 @@ import feedparser
 import requests
 import os
 import urllib.parse
-keywords = 'intitle:("phase 3" OR "FDA") site:stocktitan.net'
+keywords = 'intitle:("phase 3" OR "FDA") site:stocktitan.net when:24h'
 RSS_URL = f"https://news.google.com/rss/search?q={urllib.parse.quote(keywords)}"
 # --- CONFIGURATION ---
 # This looks for keywords ONLY on stocktitan.net
