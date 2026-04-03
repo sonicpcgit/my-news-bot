@@ -18,7 +18,8 @@ NTFY_URL = "https://ntfy.sh/stock_titan_alerts_jlc_888"
 
 # --- 2. URL CONSTRUCTION ---
 encoded_query = urllib.parse.quote(SEARCH_QUERY)
-RSS_URL = f"https://news.google.com/rss/search?q={encoded_query}"
+# RSS_URL = f"https://news.google.com/rss/search?q={encoded_query}"
+RSS_URL = "https://www.stocktitan.net/rss"
 
 # --- 3. LOAD PREVIOUSLY SEEN ARTICLES ---
 DB_FILE = "seen_articles.txt"
