@@ -3,19 +3,21 @@ import requests
 import urllib.parse
 import os
 
-# --- 1. CONFIGURATION (Edit Keywords Here) ---
-# Type your keywords naturally. No need for %20 or %22 here!
-KEYWORDS = 'intitle:("phase 3" OR "FDA") site:stocktitan.net/news when:24h'
+# --- 1. CONFIGURATION (Edit Keywords & Filters Here) ---
+# The keywords Google uses to find articles initially
+SEARCH_QUERY = 'intitle:("phase 3" OR "FDA") site:stocktitan.net/news when:24h'
 
-# Words to ignore (prevents Pizza/Crypto/Gaming false positives)
-BLOCKLIST = ["pizza", "restaurant", "burger", "gaming", "crypto", "bitcoin", "litigation"]
+# The "Double-Check" list: The title MUST contain one of these to pass
+MUST_CONTAIN = ["phase 3", "fda"]
+
+# The "Bouncer" list: If these are in the title, skip it immediately
+BLOCKLIST = ["pizza", "restaurant", "burger", "gaming", "crypto", "bitcoin", "litigation", "pineapple"]
 
 # Your ntfy.sh topic URL
 NTFY_URL = "https://ntfy.sh/stock_titan_alerts_jlc_888" 
 
 # --- 2. URL CONSTRUCTION ---
-# This encodes the KEYWORDS string into a safe URL format
-encoded_query = urllib.parse.quote(KEYWORDS)
+encoded_query = urllib.parse.quote(SEARCH_QUERY)
 RSS_URL = f"https://news.google.com/rss/search?q={encoded_query}"
 
 # --- 3. LOAD PREVIOUSLY SEEN ARTICLES ---
@@ -30,20 +32,24 @@ with open(DB_FILE, 'r') as f:
 feed = feedparser.parse(RSS_URL)
 new_ids = []
 
-print(f"Checking feed: {RSS_URL}")
+print(f"Checking feed for: {SEARCH_QUERY}")
 
 for entry in feed.entries:
-    # Get the title in lowercase for easier checking
     title_lower = entry.title.lower()
     
-    # Check the BLOCKLIST
+    # FILTER A: The "Double-Check" (Must have biotech keywords in the actual title)
+    if not any(key in title_lower for key in MUST_CONTAIN):
+        print(f"Skipping (Sidebar match only): {entry.title}")
+        continue
+
+    # FILTER B: The Blocklist (Removes known junk)
     if any(word in title_lower for word in BLOCKLIST):
         print(f"Skipping (Blocklisted): {entry.title}")
         continue
     
-    # Check if we have seen this ID before
+    # FILTER C: The ID Check (Don't alert twice)
     if entry.id not in seen_ids:
-        print(f"New Article Found: {entry.title}")
+        print(f"Verified New Article: {entry.title}")
         
         # Send to ntfy.sh
         try:
@@ -52,14 +58,15 @@ for entry in feed.entries:
                 headers={
                     "Title": entry.title,
                     "Click": entry.link,
-                    "Priority": "high"
+                    "Priority": "high",
+                    "Tags": "dna,pill"
                 }
             )
             new_ids.append(entry.id)
         except Exception as e:
             print(f"Error sending notification: {e}")
 
-    # Safety limit: don't send more than 10 alerts in one run
+    # Safety limit: max 10 alerts per 15-minute run
     if len(new_ids) >= 10:
         break
 
@@ -70,5 +77,5 @@ if new_ids:
             f.write(article_id + "\n")
     print(f"Saved {len(new_ids)} new articles to memory.")
 else:
-    print("No new matches found.")
+    print("No new verified matches found.")
     
