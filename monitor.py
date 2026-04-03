@@ -41,9 +41,18 @@ def run_monitor():
     feed = feedparser.parse(RSS_URL)
     new_ids = []
 
-    for entry in feed.entries:
-        # Check if we have notified for this article before
-        if entry.id not in seen_ids:
+    # --- ADD THIS BLOCKLIST ---
+# These are words that should NEVER be in your biotech alerts
+BLOCKLIST = ["pizza", "restaurant", "burger", "gaming", "crypto", "bitcoin"]
+
+for entry in feed.entries:
+    title_lower = entry.title.lower()
+    
+    # Only proceed if the title DOES NOT contain any blocklisted words
+    if any(word in title_lower for word in BLOCKLIST):
+        continue  # Skip this article entirely
+        
+    if entry.id not in seen_ids:
             send_alert(entry.title, entry.link)
             new_ids.append(entry.id)
             # Limit to 5 alerts per run to prevent spam
